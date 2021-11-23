@@ -47,7 +47,7 @@
 #include <string>
 #include <vector>
 
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace RobotLocalization
 {
@@ -88,7 +88,7 @@ struct Measurement
   Eigen::MatrixXd covariance_;
 
   // We want earlier times to have greater priority
-  bool operator()(const boost::shared_ptr<Measurement> &a, const boost::shared_ptr<Measurement> &b)
+  bool operator()(const std::shared_ptr<Measurement> &a, const std::shared_ptr<Measurement> &b)
   {
     return (*this)(*(a.get()), *(b.get()));
   }
@@ -106,7 +106,7 @@ struct Measurement
   {
   }
 };
-typedef boost::shared_ptr<Measurement> MeasurementPtr;
+typedef std::shared_ptr<Measurement> MeasurementPtr;
 
 //! @brief Structure used for storing and comparing filter states
 //!
@@ -142,7 +142,7 @@ struct FilterState
     latestControlTime_(0.0)
   {}
 };
-typedef boost::shared_ptr<FilterState> FilterStatePtr;
+typedef std::shared_ptr<FilterState> FilterStatePtr;
 
 class FilterBase
 {

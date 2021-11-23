@@ -41,9 +41,8 @@ namespace RobotLocalization
 RobotLocalizationEstimator::RobotLocalizationEstimator(unsigned int buffer_capacity,
                                                        FilterType filter_type,
                                                        const Eigen::MatrixXd& process_noise_covariance,
-                                                       const std::vector<double>& filter_args)
+                                                       const std::vector<double>& filter_args) : max_capacity_{buffer_capacity}
 {
-  state_buffer_.set_capacity(buffer_capacity);
 
   // Set up the filter that is used for predictions
   if ( filter_type == FilterTypes::EKF )
@@ -69,11 +68,14 @@ void RobotLocalizationEstimator::setState(const EstimatorState& state)
   if ( state_buffer_.empty() || state.time_stamp > state_buffer_.back().time_stamp )
   {
     state_buffer_.push_back(state);
+    if (state_buffer_.size() > max_capacity_) {
+      state_buffer_.pop_front(); // emulate circular buffer
+    }
   }
   // If it is older, put it in the right position
   else
   {
-    for ( boost::circular_buffer<EstimatorState>::iterator it = state_buffer_.begin(); it != state_buffer_.end(); ++it )
+    for ( auto it = state_buffer_.begin(); it != state_buffer_.end(); ++it )
     {
       if ( state.time_stamp < it->time_stamp )
       {
@@ -102,7 +104,7 @@ EstimatorResult RobotLocalizationEstimator::getState(const double time,
   bool previous_state_found = false;
   bool next_state_found = false;
 
-  for (boost::circular_buffer<EstimatorState>::const_reverse_iterator it = state_buffer_.rbegin();
+  for (auto it = state_buffer_.rbegin();
        it != state_buffer_.rend(); ++it)
   {
     /* If the time stamp of the current state from the buffer is
@@ -157,7 +159,10 @@ EstimatorResult RobotLocalizationEstimator::getState(const double time,
 
 void RobotLocalizationEstimator::setBufferCapacity(const int capacity)
 {
-  state_buffer_.set_capacity(capacity);
+  max_capacity_ = capacity;
+  while (state_buffer_.size() > max_capacity_) {
+    state_buffer_.pop_front();
+  }
 }
 
 void RobotLocalizationEstimator::clearBuffer()
@@ -167,7 +172,7 @@ void RobotLocalizationEstimator::clearBuffer()
 
 unsigned int RobotLocalizationEstimator::getBufferCapacity() const
 {
-  return state_buffer_.capacity();
+  return max_capacity_;
 }
 
 unsigned int RobotLocalizationEstimator::getSize() const

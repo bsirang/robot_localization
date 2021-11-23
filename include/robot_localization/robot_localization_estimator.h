@@ -35,7 +35,6 @@
 
 #include <iostream>
 #include <vector>
-#include <boost/circular_buffer.hpp>
 #include <Eigen/Dense>
 
 #include "robot_localization/filter_base.h"
@@ -177,7 +176,7 @@ public:
 private:
   friend std::ostream& operator<<(std::ostream &os, const RobotLocalizationEstimator& rle)
   {
-    for ( boost::circular_buffer<EstimatorState>::const_iterator it = rle.state_buffer_.begin();
+    for ( auto it = rle.state_buffer_.begin();
           it != rle.state_buffer_.end(); ++it )
     {
       os << *it << "\n";
@@ -209,7 +208,12 @@ private:
   //! @brief The buffer holding the system states that have come in. Interpolation and extrapolation is done starting
   //! from these states.
   //!
-  boost::circular_buffer<EstimatorState> state_buffer_;
+  std::deque<EstimatorState> state_buffer_;
+
+  //!
+  //! @brief The maximum capacity of the buffer holding system states
+  //!
+  unsigned int max_capacity_;
 
   //!
   //! @brief A pointer to the filter instance that is used for extrapolation
